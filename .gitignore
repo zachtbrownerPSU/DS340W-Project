@@ -1,0 +1,7 @@
+data/raw/
+*.zip
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+candidate_repos/

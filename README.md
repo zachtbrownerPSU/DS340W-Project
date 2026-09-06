@@ -189,12 +189,26 @@ Place the three Kaggle files at `data/raw/InjuryRecord.csv`, `data/raw/PlayList.
 
 ### Run
 
+Two equivalent ways to produce the figures.
+
+**Notebook (recommended — shows each figure inline, one cell at a time):**
+
+```
+./.venv/Scripts/jupyter notebook notebooks/reproduce_paper_figures.ipynb
+```
+
+Run the cells top to bottom. The "prepare tracking data" cell is the slow one (roughly a minute,
+since it streams the ~4 GB tracking file); every figure cell after it is fast and can be re-run
+on its own.
+
+**Script (writes all figures to disk in one shot):**
+
 ```
 ./.venv/Scripts/python src/reproduce_paper_figures.py
 ```
 
-This reads the raw CSVs (chunked, so the ~4 GB tracking file is never fully loaded into memory)
-and writes all eight figures as PNGs to `figures/`. A full run takes under a minute.
+Both read the raw CSVs in chunks, so the ~4 GB tracking file is never fully loaded into memory.
+The script writes all eight figures as PNGs to `figures/`; a full run takes under a minute.
 
 ## Immediate next steps
 

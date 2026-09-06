@@ -32,6 +32,7 @@ import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -45,6 +46,10 @@ TRACK_PATH = os.path.join(DATA_DIR, "PlayerTrackData.csv")
 TRACK_CHUNKSIZE = 2_000_000
 
 sns.set_theme(style="whitegrid")
+
+# seaborn's stripplot jitter draws from the global numpy RNG, so seed it to
+# keep regenerated figures byte-identical between runs
+np.random.seed(0)
 
 
 def savefig(name):

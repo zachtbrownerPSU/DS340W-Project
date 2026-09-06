@@ -102,14 +102,21 @@ def fig2_fig3_severity(injury):
     plt.xticks(rotation=0)
     savefig("fig2_days_away_counts_by_surface.png")
 
-    pct_higher = (counts["Synthetic"] - counts["Natural"]) / counts["Natural"] * 100
-    print("FIG-3 pct higher on synthetic:\n", pct_higher)
+    # The paper calls FIG-3 the "percentage of higher numbers players injured in
+    # Artificial Turf ... compare to Natural Turf", but its published bar values
+    # (9 / 16 / 39 / 40) are reproduced exactly by the synthetic share of each
+    # bucket above even, i.e. (syn - nat) / (syn + nat) -- not by the relative
+    # increase (syn - nat) / nat, which would give 21 / 39 / 127 / 136 on the
+    # paper's own FIG-2 counts. We follow the paper's actual formula.
+    share_diff = ((counts["Synthetic"] - counts["Natural"])
+                  / (counts["Synthetic"] + counts["Natural"]) * 100)
+    print("FIG-3 synthetic share difference (%):\n", share_diff)
 
     plt.figure(figsize=(8, 5))
-    plt.bar(labels, pct_higher.values, color="#8172B2")
-    plt.ylabel("% higher on synthetic vs. natural")
-    plt.title("Percent higher number of injured players on synthetic turf, by bucket")
-    for i, value in enumerate(pct_higher.values):
+    plt.bar(labels, share_diff.values, color="#8172B2")
+    plt.ylabel("Synthetic share of bucket above even (%)")
+    plt.title("Skew toward synthetic turf by days-away-from-play bucket")
+    for i, value in enumerate(share_diff.values):
         plt.text(i, value, f"{value:.0f}%", ha="center", va="bottom")
     savefig("fig3_pct_higher_synthetic.png")
 

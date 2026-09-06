@@ -211,6 +211,10 @@ def fig7_fig8_speed_distance(play_max, playlist):
     plt.xlabel("Yards per second")
     plt.ylabel("Density")
     plt.title("Distribution of Max Speed by Field Type")
+    # match the paper's FIG-7 axis; excludes 5 plays (0.002%) whose recorded
+    # max speed exceeds 12 yd/s, which are tracking artifacts
+    plt.xlim(-2, 12)
+    plt.xticks(np.arange(-2, 13, 2))
     plt.legend()
     savefig("fig7_max_speed_distribution.png")
 
@@ -221,6 +225,10 @@ def fig7_fig8_speed_distance(play_max, playlist):
     plt.xlabel("Yards per 0.1s frame")
     plt.ylabel("Density")
     plt.title("Distribution of Max Distance by Field Type")
+    # match the paper's FIG-8 axis; excludes 0.6% of plays above 1.2 yards per
+    # frame, which correspond to the same tracking artifacts
+    plt.xlim(-0.2, 1.2)
+    plt.xticks(np.round(np.arange(-0.2, 1.21, 0.2), 1))
     plt.legend()
     savefig("fig8_max_distance_distribution.png")
 

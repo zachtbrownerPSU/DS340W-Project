@@ -166,50 +166,6 @@ The raw tracking file contains tens of millions of observations. Penn State GPU 
 
 The project can retain CPU-compatible baselines so its primary results remain reproducible without specialized hardware.
 
-## Phase 1: reproducing the parent paper's figures
-
-The parent paper (Patil & Kapfhamme, 2022) does not publish its own code. `src/reproduce_paper_figures.py`
-rebuilds its eight descriptive figures directly from the raw Kaggle files:
-
-- FIG-1: injury rate (%) by field type
-- FIG-2 / FIG-3: injured-player counts and percent-higher-on-synthetic across the 1/7/28/42-day-away buckets
-- FIG-4 / FIG-5: injury field-position by body part, artificial vs. natural turf
-- FIG-6: injury field-location density, artificial vs. natural turf
-- FIG-7 / FIG-8: distribution of per-play max speed and max distance, by surface
-
-### Setup
-
-```
-py -m venv .venv
-./.venv/Scripts/pip install -r requirements.txt
-```
-
-Place the three Kaggle files at `data/raw/InjuryRecord.csv`, `data/raw/PlayList.csv`,
-`data/raw/PlayerTrackData.csv` (see `DATA_MANIFEST.md`).
-
-### Run
-
-Two equivalent ways to produce the figures.
-
-**Notebook (recommended — shows each figure inline, one cell at a time):**
-
-```
-./.venv/Scripts/jupyter notebook notebooks/reproduce_paper_figures.ipynb
-```
-
-Run the cells top to bottom. The "prepare tracking data" cell is the slow one (roughly a minute,
-since it streams the ~4 GB tracking file); every figure cell after it is fast and can be re-run
-on its own.
-
-**Script (writes all figures to disk in one shot):**
-
-```
-./.venv/Scripts/python src/reproduce_paper_figures.py
-```
-
-Both read the raw CSVs in chunks, so the ~4 GB tracking file is never fully loaded into memory.
-The script writes all eight figures as PNGs to `figures/`; a full run takes under a minute.
-
 ## Immediate next steps
 
 1. Reproduce the parent paper's descriptive figures.

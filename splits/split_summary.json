@@ -1,0 +1,22 @@
+{
+  "seed": 340,
+  "grouping_unit": "PlayerKey",
+  "total_players": 250,
+  "splits": {
+    "train": {
+      "players": 175,
+      "injured_players": 70,
+      "noninjured_players": 105
+    },
+    "test": {
+      "players": 50,
+      "injured_players": 20,
+      "noninjured_players": 30
+    },
+    "validation": {
+      "players": 25,
+      "injured_players": 10,
+      "noninjured_players": 15
+    }
+  }
+}

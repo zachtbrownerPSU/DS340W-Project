@@ -1,7 +1,14 @@
 data/raw/
+data/processed/
+data/external/raw/
+data/external/processed/
 *.zip
 .venv/
+.bin/
+.python-packages/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 candidate_repos/
+models/
+outputs/

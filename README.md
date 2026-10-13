@@ -55,3 +55,47 @@ The supporting studies reach different conclusions after accounting for exposure
 - `PlayerTrackData.csv`: location, orientation, speed, direction, and distance observations recorded at 10 Hz
 
 Raw competition files belong under `data/raw/` and should not be committed to a public repository unless the competition license permits redistribution. Reproducible download and preprocessing instructions should be committed instead.
+
+## Run the modeling code
+
+Install the Python packages:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Place the three Kaggle files listed above under `data/raw/`, then run the main pipeline:
+
+```bash
+bash scripts/run_pipeline.sh
+```
+
+On the Penn State classroom GPU server, use the project-local package setup because the server does not provide `ensurepip`:
+
+```bash
+bash scripts/setup_penn_state_server.sh
+source scripts/activate_penn_state_server.sh
+bash scripts/run_pipeline.sh
+bash scripts/run_gpu_models.sh
+```
+
+The extended experiments use repeated player-grouped cross-validation, GPU XGBoost tuning, surface inference, subgroup checks, and 5-play, 10-play, and 20-play prediction windows:
+
+```bash
+bash scripts/run_extended_analysis.sh
+```
+
+The validation players must remain untouched until a final model has been selected. Generated data, fitted models, logs, and outputs are excluded from the repository.
+
+## Build the external cohort
+
+The external analysis uses public 2020 through 2024 NFL injury reports, weekly rosters, snap counts, schedules, and playing-surface information. It remains separate from the anonymous Kaggle cohort.
+
+```bash
+bash scripts/download_external_nfl_data.sh
+python scripts/build_external_injury_cohort.py
+```
+
+The player-game cohort and game-level surface table are written under `data/external/processed/` and are excluded from GitHub because they can be rebuilt from the source data.

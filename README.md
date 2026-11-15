@@ -4,16 +4,16 @@ Course: DS 340W, Applied Data Sciences
 
 ## Project overview
 
-This project studies whether NFL playing surface contributes useful predictive information about non-contact lower-extremity injuries after accounting for player position, weather, workload, game context, and movement patterns.
+This project studies whether NFL playing surface helps predict recorded lower-limb injuries after accounting for player position, weather, workload, game context, and movement patterns. The Kaggle labels do not establish whether every injury was non-contact.
 
 The project has two phases:
 
 1. Reproduce the descriptive analysis in the parent paper, including injury frequency, injury severity, injury type, field location, speed, and distance comparisons between synthetic and natural playing surfaces.
-2. Extend the parent paper with a reproducible predictive pipeline that uses leakage-safe train, test, and untouched validation groups and compares multiple models.
+2. Extend the parent paper with a predictive pipeline that separates players across development and validation groups and compares multiple models.
 
 ## Research question
 
-Can current playing-surface and game conditions, combined with player workload and movement information available before an injury, predict a player's risk of a non-contact lower-extremity injury, and does playing surface add predictive value beyond the other factors?
+Does playing surface add predictive value for a recorded lower-limb injury during a player-game beyond game context and workload from earlier games?
 
 The project evaluates predictive association. The observational dataset cannot by itself establish that synthetic turf causes injuries.
 
@@ -25,7 +25,7 @@ The project evaluates predictive association. The observational dataset cannot b
 - Article: https://www.ijert.org/machine-learning-meets-sports
 - PDF: https://www.ijert.org/research/machine-learning-meets-sports-IJERTV11IS080140.pdf
 
-The parent paper uses the NFL playing-surface dataset and reports descriptive comparisons between artificial and natural surfaces. It does not identify a trained predictive model, publish a train/test procedure, or report predictive performance metrics. Our first phase will reproduce its descriptive findings; our main contribution will be the properly validated predictive extension.
+The parent paper reports descriptive comparisons between artificial and natural surfaces. It does not identify a trained predictive model, publish a train/test procedure, or report predictive performance metrics. We use the Kaggle dataset to reproduce its approach, but its exact source files remain unconfirmed and the reported injury totals differ from the Kaggle files. This prevents a claim of exact numerical replication.
 
 ### Supporting papers
 
@@ -87,7 +87,20 @@ The extended experiments use repeated player-grouped cross-validation, GPU XGBoo
 bash scripts/run_extended_analysis.sh
 ```
 
-The validation players must remain untouched until a final model has been selected. Generated data, fitted models, logs, and outputs are excluded from the repository.
+The original validation results have already been examined. Follow-up experiments use the original train and test players only and are exploratory; the earlier validation result is not an untouched test for later model changes. Generated data, fitted models, logs, and outputs are excluded from the repository.
+
+## Compare surface and earlier workload
+
+The feature ablation study compares context, context plus surface, context plus earlier workload, and all features together. Logistic regression, random forest, and XGBoost use identical player-grouped folds within each run.
+
+```bash
+source scripts/activate_penn_state_server.sh
+python scripts/run_feature_ablation.py --table data/processed/player_game_modeling.csv --output-dir outputs/feature_ablation_primary --device cuda:0 --chronology-policy exclude_players
+python scripts/run_feature_ablation.py --table data/processed/player_game_modeling.csv --output-dir outputs/feature_ablation_sensitivity --device cuda:1 --chronology-policy game_order
+python scripts/summarize_feature_ablation.py --primary outputs/feature_ablation_primary --sensitivity outputs/feature_ablation_sensitivity --output outputs/feature_ablation_summary.md
+```
+
+The primary run excludes players whose listed game days go backward. The sensitivity run keeps them under an explicit game-order assumption and treats nonpositive rest intervals as missing. Existing tables and results are preserved. See [feature ablation instructions](docs/feature_ablation.md) for the timing audit, feature definitions, evaluation, and output files.
 
 ## Build the external cohort
 

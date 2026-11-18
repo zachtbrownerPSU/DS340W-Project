@@ -73,7 +73,7 @@ def main():
     comparisons = {"surface_without_history": "S / no H", "surface_with_history": "S / with H",
                    "history_without_surface": "H / no S", "history_with_surface": "H / with S"}
     models = {"logistic": "LR", "random_forest": "RF", "xgboost": "XGB"}
-    fig, ax = plt.subplots(figsize=(3.55, 4.3), layout="constrained")
+    fig, ax = plt.subplots(figsize=(3.55, 3.3), layout="constrained")
     for index, row in enumerate(rows.itertuples()):
         ax.plot([row.lower_95, row.upper_95], [index, index], color="black", lw=1)
         ax.plot(row.observed_difference, index, "o", color="black", ms=3)

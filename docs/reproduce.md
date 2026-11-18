@@ -30,7 +30,7 @@ python3 -m venv .venv
 
 These commands call the environment's Python directly and do not require changing PowerShell execution policy. A managed lab computer may prevent installing Python or packages. Arrange a permitted environment before recording.
 
-The historical run manifest records Python 3.14.4, NumPy 2.5.3, pandas 3.0.6, scikit-learn 1.9.1, and XGBoost 3.4.1. The ordinary requirements file is a compatibility range, not a lockfile. For a closer match, use the recorded core versions in `requirements-study.txt` after verifying they are available for that computer. This file does not lock every transitive dependency. The new run saves `packages.txt` for its complete installed environment.
+The historical run manifest records Python 3.14.4, NumPy 2.5.3, pandas 3.0.6, scikit-learn 1.9.1, and XGBoost 3.4.1. The ordinary requirements file is a compatibility range, not a lockfile. For a closer match, install `requirements-study.txt` instead. It pins the model and plotting packages and the recorded supporting dependencies, including NCCL on Linux x86-64. It does not pin Python, the operating system, drivers, or every platform-specific dependency. Check package availability for the recording computer. The new run saves `packages.txt` for its complete installed environment.
 
 ## Data
 

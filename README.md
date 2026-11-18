@@ -58,6 +58,8 @@ Raw competition files belong under `data/raw/` and should not be committed to a 
 
 ## Run the modeling code
 
+For the fresh-machine recording, follow [the reproduction instructions](docs/reproduce.md). They include Windows and macOS setup and one command that rebuilds the main study from the raw data. It uses the committed player assignments, keeps the original experiment settings, and checks the new metrics against the recorded study. The new CPU path does not require `nvidia-smi`. A full new-machine run must still be verified before recording.
+
 Install the Python packages:
 
 ```bash

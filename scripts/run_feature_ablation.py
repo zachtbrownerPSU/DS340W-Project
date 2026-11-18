@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import json
 import platform
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -53,6 +54,22 @@ PAIRS = [
 
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def gpu_inventory(device):
+    executable = shutil.which("nvidia-smi")
+    if executable is None:
+        if device != "cpu":
+            raise RuntimeError("nvidia-smi is unavailable; use --device cpu or check the NVIDIA installation")
+        return "Unavailable; CPU execution selected"
+    result = subprocess.run(
+        [executable, "-L"], capture_output=True, text=True, timeout=30
+    )
+    if result.returncode != 0:
+        if device != "cpu":
+            raise RuntimeError("NVIDIA inventory failed: " + result.stderr.strip())
+        return "Unavailable; CPU execution selected"
+    return result.stdout
 
 
 def scores(labels, probabilities):
@@ -463,7 +480,7 @@ def main():
         "validation_players_used": False,
         "target": "recorded lower-limb injury during a player-game",
     }
-    manifest["gpu_inventory"] = subprocess.check_output(["nvidia-smi", "-L"], text=True)
+    manifest["gpu_inventory"] = gpu_inventory(args.device)
     (args.output_dir / "manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n"
     )

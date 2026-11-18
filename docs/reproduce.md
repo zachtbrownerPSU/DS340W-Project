@@ -75,6 +75,14 @@ Open these newly generated files after the run:
 
 Table I reports mean complete out-of-fold metrics across five repeats. Table II uses predictions averaged across repeats before calculating AP differences. The two summaries need not have identical differences. The bootstrap intervals apply to the second summary, not the difference between Table I means.
 
+Create the paper's column-sized black-and-white figures from a completed run:
+
+```bash
+python scripts/plot_study_results.py --run-dir outputs/recording_run/primary --output-dir outputs/recording_run/paper_figures
+```
+
+This fits no models. It saves cohort flow, logistic ROC and precision-recall curves, and the paired AP interval plot as PNG and PDF files, plus the averaged-prediction curve metrics as CSV. The precision axis is limited to 0-0.22 for readability, as stated in the paper caption. The ROC and PR legend values use probabilities averaged across repeats, not Table I's mean of repeat metrics.
+
 `check_paper_results.py` checks the saved model metrics, cohort counts, and paired AP intervals against `reference/paper_results.json`. Its absolute tolerance is 0.00005, appropriate to four-decimal reporting. It is not a claim of bitwise equality. A failed comparison must be investigated, not hidden by increasing the tolerance. This comparison is separate from the verifier that recalculates metrics from prediction files.
 
 ## What each person should explain

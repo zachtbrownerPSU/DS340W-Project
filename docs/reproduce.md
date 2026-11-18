@@ -12,12 +12,14 @@ The model settings are unchanged. The full command rebuilds tracking features fr
 
 Download the ZIP from https://github.com/zachtbrownerPSU/DS340W-Project using Code, then Download ZIP, and extract it. Open a terminal in the extracted project directory.
 
+For the closest match to the recorded study, use Python 3.14.4 and the pinned study requirements below. Check the version with `python --version` or the environment's executable. A different Python or package combination has not been shown to reproduce the paper values.
+
 Windows PowerShell:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-study.txt
 ```
 
 macOS or Linux:
@@ -25,7 +27,7 @@ macOS or Linux:
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -r requirements-study.txt
 ```
 
 These commands call the environment's Python directly and do not require changing PowerShell execution policy. A managed lab computer may prevent installing Python or packages. Arrange a permitted environment before recording.
@@ -43,6 +45,8 @@ Place `InjuryRecord.csv`, `PlayList.csv`, and `PlayerTrackData.csv` in `data/raw
 The injury file contains 105 records but 104 distinct injury player-games. Descriptive severity summaries count records. The classifier counts whether each player-game contains an injury. These totals are intentionally different.
 
 ## Run
+
+Recording warning from the November 18 rehearsal: the full NVIDIA run on the original server reproduced the study, but a CPU XGBoost check did not give the same four-decimal AP. In primary repeat 1, fold 1, context-only XGBoost gave AP 0.02697 on CPU versus 0.02644 in the recorded GPU fit. This is a fold-level diagnostic, not a new pooled study result. CPU execution is supported, but the GPU paper reference is not a verified CPU reference. The commands below can run on CPU, yet the final paper comparison may fail for that reason. Do not record a CPU-only machine as ready until its complete results are checked and any CPU-specific reporting is agreed. Do not increase the tolerance to conceal the difference.
 
 Windows PowerShell:
 

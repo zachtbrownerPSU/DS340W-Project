@@ -112,4 +112,35 @@ The external nflverse cohort has a different report-based target. It is not adde
 
 ## Status
 
-A CPU portability fix and the reproduction runner are implemented. Syntax, saved-result comparisons, and failure checks can be tested without fitting models. Run the standard-library checks with `python -m unittest discover -s tests -v`. These mock model execution and do not test a real fit. A complete fresh-machine fit must still be executed and compared before the recording is described as ready. The old GPU run is evidence for the paper's recorded findings, not evidence that a different computer has reproduced them.
+Both November 18 server rehearsals completed successfully from the raw data: one in the established environment and one in a separately installed virtual environment. Each fitted all 600 models, completed both 2,000-draw bootstraps, passed prediction verification, and passed the paper comparison. All saved repeat AP, ROC-AUC, and Brier scores matched the original study exactly. This verifies the Linux NVIDIA route on this server, not an unused computer or CPU equivalence.
+
+Run the standard-library checks with `python -m unittest discover -s tests -v`. These mock model execution and do not test a real fit. A complete unused-machine run must still be executed and compared before the recording is described as meeting that requirement.
+
+## Manual run on the classroom server
+
+This is a tested server workflow, not proof of compliance with the unused-machine assignment. Obtain instructor approval if you intend to reuse this server for that assignment. The commands reuse the clean environment and raw data already present in the team's shared directory. They do not install a new machine from scratch.
+
+Connect to the Penn State VPN and SSH into the GPU server. For an approved recording, start Zoom, screen sharing, and both webcams before the GitHub download. Choose a new clone directory if the one below already exists; never delete another run to reuse its name.
+
+```bash
+cd /data/ds340w-003-team1
+git clone https://github.com/zachtbrownerPSU/DS340W-Project.git DS340W-recording
+cd DS340W-recording
+source /data/ds340w-003-team1/reproduction_20261118/.venv-clean/bin/activate
+python --version
+python -m pip check
+nvidia-smi -L
+python scripts/reproduce_project.py --raw-dir /data/ds340w-003-team1/data/raw --output-dir outputs/recording_run --device cuda:0 --threads 8
+```
+
+Wait for `Paper comparison: PASS` and the final completion message. A returned prompt alone is not evidence of success. Do not continue past a traceback as though the run completed.
+
+```bash
+python scripts/plot_study_results.py --run-dir outputs/recording_run/primary --output-dir outputs/recording_run/paper_figures
+cat outputs/recording_run/SUMMARY.md
+cat outputs/recording_run/primary/verification.json
+cat outputs/recording_run/sensitivity/verification.json
+python -c "import json; r=json.load(open('outputs/recording_run/paper_comparison.json')); print('Paper comparison passed:', r['passed'])"
+```
+
+These commands generate new results, not a display of the November 15 files. The main run covers the feature-group experiment, not every older exploratory experiment mentioned in the paper. Runtime on a shared server can change with other users' jobs.

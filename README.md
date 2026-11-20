@@ -96,7 +96,19 @@ DS340W-Project/
             PlayerTrackData.csv
 ```
 
-The injury file contains 105 records but 104 distinct injury player-games. Severity summaries count injury records; the classifier predicts whether a player-game contains an injury. The existing player assignments in `splits/player_split_assignments.csv` must stay unchanged.
+The injury file contains 105 records but 104 distinct injury player-games. Severity summaries count injury records; the classifier predicts whether a player-game contains an injury.
+
+### Player splits
+
+The player splits are already included in `splits/player_split_assignments.csv`. You do not need to download them from Kaggle or create them again. After installing the packages and adding the raw data, just run `python main.py`.
+
+If you want to recreate the splits from the raw files, run this from the repository folder before running `main.py`:
+
+```bash
+python scripts/create_player_splits.py --raw-dir data/raw --output-dir splits --seed 340
+```
+
+This replaces the files in `splits/` with player-level training, testing, and validation assignments using the original seed. Keep the same raw files and seed to recreate the original assignments. Changing the seed changes the experiment and can change the results reported in the paper. This step only creates the assignments; it does not replace the raw Kaggle data.
 
 ### Run everything
 

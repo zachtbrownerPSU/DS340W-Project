@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 USE_COLUMNS = ["PlayKey", "time", "x", "y", "dir", "dis", "s"]
 
 
@@ -50,7 +49,9 @@ def aggregate_plays(frame: pd.DataFrame):
     result["duration_seconds"] = result["time_max"] - result["time_min"]
     result["x_range"] = result["x_max"] - result["x_min"]
     result["y_range"] = result["y_max"] - result["y_min"]
-    return result.drop(columns=["time_min", "time_max", "x_min", "x_max", "y_min", "y_max"])
+    return result.drop(
+        columns=["time_min", "time_max", "x_min", "x_max", "y_min", "y_max"]
+    )
 
 
 def main():
@@ -81,7 +82,9 @@ def main():
         complete = chunk.loc[~carry_mask]
         if not complete.empty:
             results.append(aggregate_plays(complete))
-        print(f"chunk={number} rows={rows_read} completed_plays={sum(len(x) for x in results)}")
+        print(
+            f"chunk={number} rows={rows_read} completed_plays={sum(len(x) for x in results)}"
+        )
 
     if not carry.empty:
         results.append(aggregate_plays(carry))
@@ -89,7 +92,9 @@ def main():
     features = pd.concat(results, ignore_index=True)
     if features["PlayKey"].duplicated().any():
         duplicates = int(features["PlayKey"].duplicated().sum())
-        raise RuntimeError(f"Tracking aggregation produced {duplicates} duplicate PlayKey values")
+        raise RuntimeError(
+            f"Tracking aggregation produced {duplicates} duplicate PlayKey values"
+        )
 
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
     features.to_csv(args.output_file, index=False)

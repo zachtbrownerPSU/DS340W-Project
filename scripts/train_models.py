@@ -23,7 +23,6 @@ from sklearn.model_selection import StratifiedGroupKFold, cross_val_predict
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-
 CONTEXT_CATEGORICAL = [
     "FieldType",
     "StadiumType_clean",
@@ -301,7 +300,9 @@ def main():
         evaluation = data[data["split"].eq("test")].copy()
         mode = "model_development"
 
-    specs = model_specs(args.include_xgboost, args.device, training["injury"].to_numpy())
+    specs = model_specs(
+        args.include_xgboost, args.device, training["injury"].to_numpy()
+    )
     if args.final_model:
         if args.final_model not in specs:
             raise ValueError(f"Unknown final model: {args.final_model}")
@@ -341,7 +342,9 @@ def main():
     rows = []
     for name, values in metrics["models"].items():
         row = {"model": name}
-        row.update({key: value for key, value in values.items() if key != "confusion_matrix"})
+        row.update(
+            {key: value for key, value in values.items() if key != "confusion_matrix"}
+        )
         rows.append(row)
     pd.DataFrame(rows).to_csv(args.output_dir / "metrics.csv", index=False)
     print(json.dumps(metrics, indent=2))

@@ -17,7 +17,9 @@ def bootstrap_scores(frame, repetitions, seed):
     generator = np.random.default_rng(seed)
     rows = []
     for repetition in range(repetitions):
-        sample = sampled_rows(frame, generator.choice(players, size=len(players), replace=True))
+        sample = sampled_rows(
+            frame, generator.choice(players, size=len(players), replace=True)
+        )
         labels = sample["injury"].to_numpy()
         probabilities = sample["probability"].to_numpy()
         if np.unique(labels).size < 2:
@@ -60,13 +62,17 @@ def paired_difference(left, right, metric, repetitions, seed):
     generator = np.random.default_rng(seed)
     differences = []
     for _ in range(repetitions):
-        sample = sampled_rows(merged, generator.choice(players, size=len(players), replace=True))
+        sample = sampled_rows(
+            merged, generator.choice(players, size=len(players), replace=True)
+        )
         labels = sample["injury"].to_numpy()
         if np.unique(labels).size < 2:
             continue
         with_surface = sample["probability_with_surface"].to_numpy()
         without_surface = sample["probability_without_surface"].to_numpy()
-        differences.append(metric(labels, with_surface) - metric(labels, without_surface))
+        differences.append(
+            metric(labels, with_surface) - metric(labels, without_surface)
+        )
     values = np.asarray(differences)
     return {
         "mean_difference": float(values.mean()),
@@ -109,11 +115,17 @@ def main():
                 "mean_predicted_probability": float(predicted_value),
                 "observed_fraction": float(observed_value),
             }
-            for index, (predicted_value, observed_value) in enumerate(zip(predicted, observed))
+            for index, (predicted_value, observed_value) in enumerate(
+                zip(predicted, observed)
+            )
         )
 
-    pd.DataFrame(intervals).to_csv(args.model_dir / "bootstrap_intervals.csv", index=False)
-    pd.DataFrame(calibration_rows).to_csv(args.model_dir / "calibration.csv", index=False)
+    pd.DataFrame(intervals).to_csv(
+        args.model_dir / "bootstrap_intervals.csv", index=False
+    )
+    pd.DataFrame(calibration_rows).to_csv(
+        args.model_dir / "calibration.csv", index=False
+    )
 
     pairs = [
         ("full_logistic", "full_logistic_no_surface"),
@@ -165,7 +177,10 @@ def main():
     lines.extend(
         [
             "",
-            "Surface comparisons are paired cluster bootstraps over held-out players. A positive average-precision or ROC-AUC difference favors the model with surface. A negative Brier-score difference favors the model with surface.",
+            "Surface comparisons bootstrap held-out players, keeping each "
+            "player's rows together. Each difference is the score with "
+            "surface minus the score without it. Higher AP or ROC-AUC favors "
+            "the model with surface; lower Brier favors it.",
             "",
         ]
     )

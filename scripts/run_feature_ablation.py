@@ -60,7 +60,9 @@ def gpu_inventory(device):
     executable = shutil.which("nvidia-smi")
     if executable is None:
         if device != "cpu":
-            raise RuntimeError("nvidia-smi is unavailable; use --device cpu or check the NVIDIA installation")
+            raise RuntimeError(
+                "nvidia-smi is unavailable; use --device cpu or check the NVIDIA installation"
+            )
         return "Unavailable; CPU execution selected"
     result = subprocess.run(
         [executable, "-L"], capture_output=True, text=True, timeout=30
@@ -307,7 +309,7 @@ def draw_curves(data, probability_map, output):
             xlabel="Recall", ylabel="Precision", xlim=(0, 1), ylim=(0, 1)
         )
     axes[1, 2].legend(fontsize=8)
-    fig.suptitle("Exploratory development predictions averaged over grouped CV repeats")
+    fig.suptitle("Development predictions averaged across grouped CV repeats")
     fig.tight_layout()
     fig.savefig(output / "roc_precision_recall.png", dpi=180)
     fig.savefig(output / "roc_precision_recall.pdf")
@@ -320,19 +322,30 @@ def write_summary(audit, pooled, paired, bootstrap, args):
         "",
         "## Scope",
         "",
-        "Exploratory follow-up after the original final validation results were examined. Only original train and test players were fitted or scored. No new final validation claim is made.",
+        "This follow-up uses only the original training and testing players. "
+        "We had already seen the earlier validation results, so this is "
+        "exploratory work, not a new final validation test.",
         "",
         f"Development sample: {audit['development_rows']} player-games, {audit['development_players']} players, {audit['injury_games']} injury games. Prevalence: {audit['prevalence']:.4%}.",
         "",
-        f"All 12 configurations used the same {args.repeats} repetitions of {args.folds} player-grouped folds. Hyperparameters were fixed before this run. Class weights for XGBoost were calculated within each training fold. Imputation, scaling, and encoding were fitted within each training fold.",
+        f"All 12 model and input combinations used the same {args.repeats} repeats of {args.folds} player-grouped folds. Model settings were fixed before the run. XGBoost class weights, imputation, scaling, and encoding were fitted using each training fold only.",
         "",
         "## Feature groups",
         "",
-        "Context includes position, stadium, weather, temperature, player-day, player-game, earlier game count, days since the previous game, and prior injury count. History adds previous-game and prior-three-game workload and movement summaries. Surface is FieldType only; stadium and weather can still proxy surface, so this isolates the extra value of explicitly providing surface.",
+        "Context includes position, stadium, weather, temperature, "
+        "player-day, player-game, earlier game count, days since the previous "
+        "game, and prior injury count. History adds movement and workload "
+        "from the previous game and up to three earlier games. Surface adds "
+        "FieldType. Stadium and weather remain available in every comparison, "
+        "so leaving out FieldType does not remove all surface-related "
+        "information.",
         "",
         "## Performance",
         "",
-        "The table reports the mean of complete out-of-fold metrics over repeats, not the mean of fold-level AP values. Fold percentiles and repeat variation are descriptive and are not independent-sample confidence intervals.",
+        "For each repeat, we score the complete out-of-fold predictions, then "
+        "average those scores across repeats. We do not average the "
+        "fold-level AP scores. Fold percentiles and variation between repeats "
+        "are descriptive, not independent-sample confidence intervals.",
         "",
         "| Model | Feature set | Mean AP | Mean ROC-AUC | Mean Brier |",
         "|---|---|---:|---:|---:|",
@@ -349,7 +362,9 @@ def write_summary(audit, pooled, paired, bootstrap, args):
         "",
         "## Paired changes",
         "",
-        "Differences are the added-feature configuration minus the otherwise identical configuration. Fractions describe repeats and are not p-values.",
+        "Each change is the score with the added inputs minus the score "
+        "without them. The fraction counts repeats with higher AP; it is not "
+        "a p-value.",
         "",
         "| Model | Added features | Mean AP change | Repeats with AP improvement |",
         "|---|---|---:|---:|",
@@ -364,7 +379,12 @@ def write_summary(audit, pooled, paired, bootstrap, args):
         "",
         "## Player bootstrap",
         "",
-        "These intervals resample players with replacement using predictions averaged across CV repeats. Each player's predictions were made by models excluding that player. The intervals condition on the fitted models, omit model-refitting uncertainty, and describe an averaged cross-validation predictor rather than a separately tested deployed model. Multiple comparisons are exploratory and unadjusted.",
+        "We average predictions across CV repeats, then resample players with "
+        "replacement. Each player's predictions come from models trained "
+        "without that player. Models are not refitted during the bootstrap, "
+        "so these intervals omit refitting uncertainty. They describe the "
+        "averaged CV predictions, not a separately tested deployment model. "
+        "We did not adjust for multiple comparisons.",
         "",
         "| Model | Comparison | Observed AP change | Lower 95% | Upper 95% |",
         "|---|---|---:|---:|---:|",
@@ -377,17 +397,30 @@ def write_summary(audit, pooled, paired, bootstrap, args):
         "",
         "## Timing and data audit",
         "",
-        "All 18 history columns were independently recomputed using the listed PlayerGame order and matched the saved table. Earlier injury counts, days since prior game, and earlier game counts matched that order. Current-game workload, injury severity, identifiers, and current injury outcomes were excluded from inputs.",
+        "We recalculated all 18 history columns from the listed PlayerGame "
+        "order and checked them against the saved table. Prior injury counts, "
+        "rest days, and earlier game counts also matched. Model inputs "
+        "exclude current-game workload, injury severity, identifiers, and "
+        "current injury outcomes.",
         "",
-        f"Chronology policy: {args.chronology_policy}. The original development data had {audit['original_conflicting_players']} players with a backward or repeated PlayerDay interval. The primary exclude_players policy removes all games for those players before splitting folds. The game_order sensitivity retains them, assumes PlayerGame defines the true order, and replaces nonpositive rest intervals with missing values. That assumption does not resolve the underlying date inconsistency. See chronology_conflicts.csv for affected player-games.",
+        f"Timing policy: {args.chronology_policy}. In the original development data, {audit['original_conflicting_players']} players had dates that went backward or repeated between games. The primary exclude_players policy removes those players before making folds. The game_order sensitivity keeps them, assumes the listed game order is correct, and treats rest intervals of zero or less as missing. This is an assumption, not a correction of the source dates. Affected games are listed in chronology_conflicts.csv.",
         "",
-        f"There were {audit['games_without_tracking']} games without tracking, {audit['games_with_partial_tracking']} with partial tracking, {audit['rows_without_previous_game']} with no previous game, and {audit['rows_with_previous_game_but_no_prior_tracking']} with a previous game but no prior tracking. Missing tracking and zero totals can influence predictions; history therefore combines measured movement, exposure, and data-availability signals. This experiment does not isolate their individual effects.",
+        f"There were {audit['games_without_tracking']} games without tracking, {audit['games_with_partial_tracking']} with partial tracking, {audit['rows_without_previous_game']} with no previous game, and {audit['rows_with_previous_game_but_no_prior_tracking']} with a previous game but no prior tracking. Missing data and zero totals can affect predictions. The history inputs combine movement, exposure, and tracking availability; this experiment does not separate their effects.",
         "",
         "## Limits and interpretation",
         "",
-        "The target is whether a player-game contains a recorded lower-limb injury. The code does not establish non-contact mechanism or predict a diagnosis. The cohort is small and selected; unrecorded injuries, confounding, and the limited generalizability of random player splits remain concerns. PlayerDay is relative time, so this is not a calendar-based future-season test. A change in predictive performance is not a causal effect of turf or workload. Bootstrap intervals crossing zero indicate uncertainty, and neither a positive point estimate nor a null result is proof of a general effect.",
+        "We predict recorded lower-limb injury during a player-game, not "
+        "injury mechanism or diagnosis. The sample is small and selected. "
+        "Missing injuries, confounding, and differences from other player "
+        "populations limit the findings. PlayerDay is relative time, so this "
+        "is not a future-season test. Better prediction would not prove that "
+        "turf or workload causes injury. An interval crossing zero means the "
+        "estimated change is uncertain; it does not prove there is no effect.",
         "",
-        "The earlier validation sample was already viewed before this study. An independent cohort would be needed to confirm changes selected using these results. Larger compute capacity does not increase the number of independent injury events.",
+        "We had already viewed the earlier validation sample before this "
+        "study. Changes chosen from these results need testing on independent "
+        "data. More computing power cannot make up for the small number of "
+        "injury events.",
         "",
         "## Reproduce",
         "",
@@ -395,7 +428,11 @@ def write_summary(audit, pooled, paired, bootstrap, args):
         f"python scripts/run_feature_ablation.py --table {args.table} --output-dir outputs/feature_ablation_new_run --repeats {args.repeats} --folds {args.folds} --bootstrap {args.bootstrap} --seed {args.seed} --threads {args.threads} --device {args.device} --chronology-policy {args.chronology_policy}",
         "```",
         "",
-        "See manifest.json for hashes, features, settings, package versions, and server information. See fold_assignments.csv, fold_metrics.csv, repeat_metrics.csv, paired_repeat_differences.csv, player_bootstrap_differences.csv, and predictions/ for the complete results.",
+        "manifest.json records file hashes, inputs, settings, package "
+        "versions, and machine details. Full results are saved in "
+        "fold_assignments.csv, fold_metrics.csv, repeat_metrics.csv, "
+        "paired_repeat_differences.csv, player_bootstrap_differences.csv, and "
+        "predictions/.",
     ]
     (args.output_dir / "SUMMARY.md").write_text("\n".join(lines) + "\n")
 

@@ -23,7 +23,6 @@ from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-
 CATEGORICAL = [
     "FieldType",
     "StadiumType_clean",
@@ -164,7 +163,9 @@ def choose_threshold(labels, probabilities):
 def metrics(labels, probabilities, threshold, evaluation):
     predictions = (probabilities >= threshold).astype(int)
     matrix = confusion_matrix(labels, predictions, labels=[0, 1])
-    positive_games = evaluation.loc[labels == 1, ["PlayerKey", "GameID"]].drop_duplicates()
+    positive_games = evaluation.loc[
+        labels == 1, ["PlayerKey", "GameID"]
+    ].drop_duplicates()
     alerted_games = evaluation.loc[
         (labels == 1) & (predictions == 1), ["PlayerKey", "GameID"]
     ].drop_duplicates()
@@ -182,7 +183,9 @@ def metrics(labels, probabilities, threshold, evaluation):
         "f1": float(f1_score(labels, predictions, zero_division=0)),
         "brier_score": float(brier_score_loss(labels, probabilities)),
         "injury_game_alert_rate": float(len(alerted_games) / len(positive_games)),
-        "false_alerts_per_1000_negative_plays": float(false_alerts * 1000 / negative_rows),
+        "false_alerts_per_1000_negative_plays": float(
+            false_alerts * 1000 / negative_rows
+        ),
         "confusion_matrix": matrix.tolist(),
     }
 
@@ -234,12 +237,12 @@ def out_of_fold_probabilities(pipeline, features, data, target, folds):
     return probabilities
 
 
-def run_model(name, pipeline, features, training, evaluation, target, folds, output_dir):
+def run_model(
+    name, pipeline, features, training, evaluation, target, folds, output_dir
+):
     train_labels = training[target].to_numpy()
     evaluation_labels = evaluation[target].to_numpy()
-    out_of_fold = out_of_fold_probabilities(
-        pipeline, features, training, target, folds
-    )
+    out_of_fold = out_of_fold_probabilities(pipeline, features, training, target, folds)
     threshold = choose_threshold(train_labels, out_of_fold)
     pipeline.fit(training[features], train_labels)
     probabilities = pipeline.predict_proba(evaluation[features])[:, 1]
@@ -325,12 +328,16 @@ def main():
         for name, values in target_metrics.items():
             row = {"model": name}
             row.update(
-                {key: value for key, value in values.items() if key != "confusion_matrix"}
+                {
+                    key: value
+                    for key, value in values.items()
+                    if key != "confusion_matrix"
+                }
             )
             rows.append(row)
-        pd.DataFrame(rows).sort_values(
-            "average_precision", ascending=False
-        ).to_csv(target_dir / "metrics.csv", index=False)
+        pd.DataFrame(rows).sort_values("average_precision", ascending=False).to_csv(
+            target_dir / "metrics.csv", index=False
+        )
         summary["targets"][target] = target_metrics
 
     (args.output_dir / "metrics.json").write_text(

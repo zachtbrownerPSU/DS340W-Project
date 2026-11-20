@@ -63,7 +63,9 @@ def evaluate_candidate(model, data, features, labels, groups, folds):
         brier.append(brier_score_loss(labels[test_index], probabilities))
     return {
         "mean_average_precision": float(np.mean(average_precision)),
-        "standard_deviation_average_precision": float(np.std(average_precision, ddof=1)),
+        "standard_deviation_average_precision": float(
+            np.std(average_precision, ddof=1)
+        ),
         "mean_roc_auc": float(np.mean(roc_auc)),
         "mean_brier_score": float(np.mean(brier)),
     }
@@ -119,9 +121,7 @@ def main():
             scale_pos_weight,
             args.device,
         )
-        scores = evaluate_candidate(
-            model, data, features, labels, groups, fold_indices
-        )
+        scores = evaluate_candidate(model, data, features, labels, groups, fold_indices)
         rows.append({"trial": trial, **parameters, **scores})
         print(
             f"trial={trial} average_precision={scores['mean_average_precision']:.5f} "

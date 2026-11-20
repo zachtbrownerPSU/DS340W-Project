@@ -6,7 +6,6 @@ import pandas as pd
 
 from build_player_game_table import clean_stadium, clean_weather
 
-
 TRACKING_COLUMNS = [
     "distance_total",
     "speed_mean",
@@ -67,13 +66,15 @@ def main():
     splits = pd.read_csv(args.split_file)
 
     plays = plays.merge(tracking, on="PlayKey", how="left", validate="one_to_one")
-    injury_timing = injuries.dropna(subset=["PlayKey"])[
-        ["PlayerKey", "GameID", "PlayKey"]
-    ].drop_duplicates().merge(
-        plays[["PlayerKey", "GameID", "PlayKey", "PlayerGamePlay"]],
-        on=["PlayerKey", "GameID", "PlayKey"],
-        how="left",
-        validate="one_to_one",
+    injury_timing = (
+        injuries.dropna(subset=["PlayKey"])[["PlayerKey", "GameID", "PlayKey"]]
+        .drop_duplicates()
+        .merge(
+            plays[["PlayerKey", "GameID", "PlayKey", "PlayerGamePlay"]],
+            on=["PlayerKey", "GameID", "PlayKey"],
+            how="left",
+            validate="one_to_one",
+        )
     )
     if injury_timing["PlayerGamePlay"].isna().any():
         missing = int(injury_timing["PlayerGamePlay"].isna().sum())
@@ -107,9 +108,9 @@ def main():
     distance_to_injury = plays["injury_play_number"] - plays["PlayerGamePlay"]
     plays["plays_until_injury"] = distance_to_injury
     for window in [5, 10, 20]:
-        plays[f"injury_within_{window}_plays"] = (
-            distance_to_injury.between(1, window).astype("int8")
-        )
+        plays[f"injury_within_{window}_plays"] = distance_to_injury.between(
+            1, window
+        ).astype("int8")
 
     plays = plays[
         plays["injury_play_number"].isna()

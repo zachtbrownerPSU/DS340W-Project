@@ -24,7 +24,7 @@ def verify(root):
             != expected_hash
         ):
             raise RuntimeError(
-                "Executed source snapshot does not match its recorded hash"
+                "Saved code does not match the hash recorded for this run"
             )
     source = pd.read_csv(table)
     validation_players = set(source.loc[source.split.eq("validation"), "PlayerKey"])
@@ -112,7 +112,10 @@ def main():
     lines = [
         "# Workload and surface comparison",
         "",
-        "The original descriptive study was extended with a controlled four-feature-group comparison using logistic regression, random forest, and GPU-trained XGBoost. All analysis ran on i4-cs-gpu11. These are exploratory development results, not a new final validation test.",
+        "We compare four input groups using logistic regression, random "
+        "forest, and XGBoost. These are follow-up development results, not a "
+        "new final validation test. Each run's manifest records the machine "
+        "and device used.",
         "",
     ]
     for name, root in [
@@ -140,7 +143,10 @@ def main():
             )
         lines += [
             "",
-            "Paired AP differences are added features minus the matching baseline. Intervals below come from the conditional player bootstrap of predictions averaged across repeats; they are not intervals for the repeat-mean difference.",
+            "AP changes compare each added input group with its matching "
+            "baseline. For the intervals, we average predictions across "
+            "repeats, then bootstrap players. These are not intervals for the "
+            "difference between the mean repeat scores.",
             "",
             "| Model | Comparison | Mean repeat AP change | Bootstrap AP change | Lower 95% | Upper 95% |",
             "|---|---|---:|---:|---:|---:|",
@@ -155,25 +161,42 @@ def main():
             )
         lines += [
             "",
-            f"Verification passed: {checked['fits']} fits, {checked['verified_prediction_files']} prediction files, exact shared folds, no validation players, and saved metrics reproduced from prediction files.",
+            f"Checks passed: {checked['fits']} fits and {checked['verified_prediction_files']} prediction files. Models used the same folds, validation players were excluded, and scores recalculated from predictions matched the saved scores.",
             "",
         ]
         lines += [
-            f"Constant risk at the sample prevalence has Brier {audit['prevalence'] * (1 - audit['prevalence']):.5f} as a descriptive reference. All configurations here have worse mean Brier, especially the class-weighted logistic models. Their scores should not be described as calibrated injury probabilities.",
+            f"Predicting the sample injury rate for every game gives a Brier score of {audit['prevalence'] * (1 - audit['prevalence']):.5f}. Compare the model scores with this reference; lower is better. Ranking performance alone does not show that the probabilities are calibrated.",
             "",
         ]
     lines += [
         "## What the study contributes",
         "",
-        "This separates the incremental predictive value of surface from that of earlier workload under matched model and fold settings. It also identifies and documents the backward-date problem instead of assuming every historical feature is valid. The contribution is the experiment and its findings, not a new machine learning algorithm or a proven causal explanation.",
+        "We test whether surface and earlier workload add useful information "
+        "while keeping the models and folds the same. We also check the "
+        "conflicting game dates and compare two ways of handling them. The "
+        "contribution is this comparison and its findings, not a new "
+        "algorithm or evidence of causation.",
         "",
         "## Reporting limits",
         "",
-        "There are only 90 injury games in the primary sample and 93 in sensitivity. All recorded lower-limb injury games are the target, without a verified non-contact label. Timing exclusions change the population; the sensitivity run assumes the listed game order is correct. Surface-related context remains available when explicit surface is omitted. No multiple-comparison correction or independent external test was performed. Earlier final validation results were already examined, so new results and any new model selection must be labeled exploratory.",
+        "The reference study has 90 injury games in the primary sample and 93 "
+        "in sensitivity. The target includes recorded lower-limb injuries, "
+        "not verified non-contact injuries. Excluding players with "
+        "conflicting dates changes the sample; retaining them assumes the "
+        "listed game order is correct. Stadium and weather can still reveal "
+        "surface information when FieldType is left out. We did not adjust "
+        "for multiple comparisons or test an independent cohort. Because we "
+        "had already seen the earlier validation results, this follow-up "
+        "remains exploratory.",
         "",
-        "The original final-validation random forest result remains a historical result for that earlier model only: AP 0.0527 and ROC-AUC 0.7046. It is not the final score of the models evaluated in this follow-up.",
+        "The original final-validation random forest result remains a "
+        "historical result for that earlier model only: AP 0.0527 and ROC-AUC "
+        "0.7046. It is not the final score of the models evaluated in this "
+        "follow-up.",
         "",
-        "See docs/feature_ablation.md and each run's SUMMARY.md, manifest.json, data_audit.json, and verification.json for methods, provenance, and checks.",
+        "See docs/feature_ablation.md for the method. Each run also saves "
+        "SUMMARY.md, manifest.json, data_audit.json, and verification.json "
+        "with its settings and checks.",
     ]
     args.output.write_text("\n".join(lines) + "\n")
     print("saved=" + str(args.output))

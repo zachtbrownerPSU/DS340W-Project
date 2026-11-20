@@ -5,7 +5,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 STATIC_COLUMNS = [
     "RosterPosition",
     "PlayerDay",
@@ -129,15 +128,12 @@ def main():
     plays = plays.merge(tracking, on="PlayKey", how="left", validate="one_to_one")
     games = aggregate_games(plays)
 
-    injury_games = (
-        injuries.groupby(["PlayerKey", "GameID"], as_index=False)
-        .agg(
-            injury=("GameID", "size"),
-            DM_M1=("DM_M1", "max"),
-            DM_M7=("DM_M7", "max"),
-            DM_M28=("DM_M28", "max"),
-            DM_M42=("DM_M42", "max"),
-        )
+    injury_games = injuries.groupby(["PlayerKey", "GameID"], as_index=False).agg(
+        injury=("GameID", "size"),
+        DM_M1=("DM_M1", "max"),
+        DM_M7=("DM_M7", "max"),
+        DM_M28=("DM_M28", "max"),
+        DM_M42=("DM_M42", "max"),
     )
     injury_games["injury"] = 1
     games = games.merge(injury_games, on=["PlayerKey", "GameID"], how="left")

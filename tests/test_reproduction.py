@@ -10,7 +10,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -30,8 +29,16 @@ class ReproductionTests(unittest.TestCase):
             os.chdir(ROOT)
             with tempfile.TemporaryDirectory() as directory:
                 output = Path(directory) / "run"
-                argv = ["main.py", "--raw-dir", str(Path(directory) / "missing"), "--output-dir", str(output)]
-                with patch.object(sys, "argv", argv), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                argv = [
+                    "main.py",
+                    "--raw-dir",
+                    str(Path(directory) / "missing"),
+                    "--output-dir",
+                    str(output),
+                ]
+                with patch.object(sys, "argv", argv), contextlib.redirect_stderr(
+                    io.StringIO()
+                ), self.assertRaises(SystemExit):
                     module.main()
                 self.assertFalse(output.exists())
         finally:
@@ -49,28 +56,51 @@ class ReproductionTests(unittest.TestCase):
                     (raw / name).touch()
                 output = Path(directory) / "run"
                 argv = ["main.py", "--raw-dir", str(raw), "--output-dir", str(output)]
-                completed = subprocess.CompletedProcess([], 0, stdout="test-package==1\n", stderr="")
+                completed = subprocess.CompletedProcess(
+                    [], 0, stdout="test-package==1\n", stderr=""
+                )
+
                 def stage(script, *arguments):
                     if script == "check_paper_results.py":
-                        (output / "paper_comparison.json").write_text('{"passed": true}')
+                        (output / "paper_comparison.json").write_text(
+                            '{"passed": true}'
+                        )
                         (output / "SUMMARY.md").write_text("Study summary")
 
-                with patch.object(sys, "argv", argv), patch.object(module.importlib.util, "find_spec", return_value=True), patch.object(module.subprocess, "run", return_value=completed), patch.object(module, "run", side_effect=stage) as called, contextlib.redirect_stdout(io.StringIO()):
+                with patch.object(sys, "argv", argv), patch.object(
+                    module.importlib.util, "find_spec", return_value=True
+                ), patch.object(
+                    module.subprocess, "run", return_value=completed
+                ), patch.object(
+                    module, "run", side_effect=stage
+                ) as called, contextlib.redirect_stdout(
+                    io.StringIO()
+                ):
                     module.main()
                 commands = [call.args for call in called.call_args_list]
                 self.assertEqual(commands[0][0], "validate_data.py")
                 self.assertEqual(commands[-1][0], "check_paper_results.py")
                 self.assertIn("--report-only", commands[-1])
-                self.assertEqual(len([c for c in commands if c[0] == "plot_study_results.py"]), 2)
+                self.assertEqual(
+                    len([c for c in commands if c[0] == "plot_study_results.py"]), 2
+                )
                 fits = [c for c in commands if c[0] == "run_feature_ablation.py"]
                 self.assertEqual(len(fits), 2)
                 for command in fits:
-                    for flag, expected in [("--repeats", 5), ("--folds", 5), ("--bootstrap", 2000), ("--seed", 340), ("--device", "cpu")]:
+                    for flag, expected in [
+                        ("--repeats", 5),
+                        ("--folds", 5),
+                        ("--bootstrap", 2000),
+                        ("--seed", 340),
+                        ("--device", "cpu"),
+                    ]:
                         self.assertEqual(command[command.index(flag) + 1], expected)
                 self.assertEqual(fits[0][-1], "exclude_players")
                 self.assertEqual(fits[1][-1], "game_order")
                 self.assertTrue((output / "packages.txt").is_file())
-                with patch.object(sys, "argv", argv), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                with patch.object(sys, "argv", argv), contextlib.redirect_stderr(
+                    io.StringIO()
+                ), self.assertRaises(SystemExit):
                     module.main()
         finally:
             os.chdir(previous)
@@ -97,7 +127,17 @@ class ReproductionTests(unittest.TestCase):
                 os.chdir(root.parent)
                 completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
                 messages = io.StringIO()
-                with patch.object(module, "ROOT", root), patch.object(sys, "argv", ["main.py"]), patch.object(module.importlib.util, "find_spec", return_value=True), patch.object(module.subprocess, "run", return_value=completed), patch.object(module, "run", side_effect=stage), contextlib.redirect_stdout(messages):
+                with patch.object(module, "ROOT", root), patch.object(
+                    sys, "argv", ["main.py"]
+                ), patch.object(
+                    module.importlib.util, "find_spec", return_value=True
+                ), patch.object(
+                    module.subprocess, "run", return_value=completed
+                ), patch.object(
+                    module, "run", side_effect=stage
+                ), contextlib.redirect_stdout(
+                    messages
+                ):
                     module.main()
                     module.main()
                 self.assertEqual(len(list((root / "outputs").iterdir())), 2)
@@ -121,8 +161,25 @@ class ReproductionTests(unittest.TestCase):
                     raise subprocess.CalledProcessError(1, [script])
 
             completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
-            argv = ["main.py", "--raw-dir", str(raw), "--output-dir", str(output), "--strict-paper-match"]
-            with patch.object(sys, "argv", argv), patch.object(module.importlib.util, "find_spec", return_value=True), patch.object(module.subprocess, "run", return_value=completed), patch.object(module, "run", side_effect=stage), contextlib.redirect_stdout(io.StringIO()), self.assertRaises(subprocess.CalledProcessError):
+            argv = [
+                "main.py",
+                "--raw-dir",
+                str(raw),
+                "--output-dir",
+                str(output),
+                "--strict-paper-match",
+            ]
+            with patch.object(sys, "argv", argv), patch.object(
+                module.importlib.util, "find_spec", return_value=True
+            ), patch.object(
+                module.subprocess, "run", return_value=completed
+            ), patch.object(
+                module, "run", side_effect=stage
+            ), contextlib.redirect_stdout(
+                io.StringIO()
+            ), self.assertRaises(
+                subprocess.CalledProcessError
+            ):
                 module.main()
 
     def test_stage_failure_stops_later_stages(self):
@@ -132,15 +189,35 @@ class ReproductionTests(unittest.TestCase):
             raw.mkdir()
             for name in ["InjuryRecord.csv", "PlayList.csv", "PlayerTrackData.csv"]:
                 (raw / name).touch()
-            argv = ["main.py", "--raw-dir", str(raw), "--output-dir", str(Path(directory) / "run")]
+            argv = [
+                "main.py",
+                "--raw-dir",
+                str(raw),
+                "--output-dir",
+                str(Path(directory) / "run"),
+            ]
             completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
-            with patch.object(sys, "argv", argv), patch.object(module.importlib.util, "find_spec", return_value=True), patch.object(module.subprocess, "run", return_value=completed), patch.object(module, "run", side_effect=subprocess.CalledProcessError(1, ["validate_data.py"])) as called, contextlib.redirect_stdout(io.StringIO()), self.assertRaises(subprocess.CalledProcessError):
+            with patch.object(sys, "argv", argv), patch.object(
+                module.importlib.util, "find_spec", return_value=True
+            ), patch.object(
+                module.subprocess, "run", return_value=completed
+            ), patch.object(
+                module,
+                "run",
+                side_effect=subprocess.CalledProcessError(1, ["validate_data.py"]),
+            ) as called, contextlib.redirect_stdout(
+                io.StringIO()
+            ), self.assertRaises(
+                subprocess.CalledProcessError
+            ):
                 module.main()
             self.assertEqual(called.call_count, 1)
 
     def test_child_process_uses_repository_and_current_python(self):
         module = load("main")
-        with patch.object(module.subprocess, "run") as called, contextlib.redirect_stdout(io.StringIO()):
+        with patch.object(
+            module.subprocess, "run"
+        ) as called, contextlib.redirect_stdout(io.StringIO()):
             module.run("validate_data.py", "--raw-dir", "data/raw")
         self.assertEqual(called.call_args.args[0][0], sys.executable)
         self.assertEqual(called.call_args.kwargs, {"cwd": ROOT, "check": True})
@@ -149,9 +226,19 @@ class ReproductionTests(unittest.TestCase):
         module = load("check_paper_results")
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "comparison.json"
-            argv = ["check_paper_results.py", "--primary", "primary", "--sensitivity", "sensitivity", "--output", str(report)]
+            argv = [
+                "check_paper_results.py",
+                "--primary",
+                "primary",
+                "--sensitivity",
+                "sensitivity",
+                "--output",
+                str(report),
+            ]
             failure = [{"item": "test", "passed": False, "expected": 1, "actual": 2}]
-            with patch.object(module, "compare", return_value=failure), contextlib.redirect_stdout(io.StringIO()):
+            with patch.object(
+                module, "compare", return_value=failure
+            ), contextlib.redirect_stdout(io.StringIO()):
                 with patch.object(sys, "argv", argv + ["--report-only"]):
                     module.main()
                 self.assertFalse(json.loads(report.read_text())["passed"])
@@ -160,19 +247,33 @@ class ReproductionTests(unittest.TestCase):
 
     def test_comparison_rejects_an_incorrect_metric(self):
         module = load("check_paper_results")
-        source = json.loads((ROOT / "reference/paper_results.json").read_text())["primary"]
+        source = json.loads((ROOT / "reference/paper_results.json").read_text())[
+            "primary"
+        ]
         metrics = []
         for record in source["performance"]:
             metrics.extend([record.copy() for _ in range(5)])
-        pairs = [{**r, "metric": "average_precision"} for r in source["paired_average_precision"]]
+        pairs = [
+            {**r, "metric": "average_precision"}
+            for r in source["paired_average_precision"]
+        ]
 
         def read(path):
             return metrics if path.name == "repeat_metrics.csv" else pairs
 
-        with patch.object(module, "rows", side_effect=read), patch.object(Path, "read_text", return_value=json.dumps(source["cohort"])):
-            self.assertTrue(all(r["passed"] for r in module.compare(Path("run"), source, 0.00005)))
+        with patch.object(module, "rows", side_effect=read), patch.object(
+            Path, "read_text", return_value=json.dumps(source["cohort"])
+        ):
+            self.assertTrue(
+                all(r["passed"] for r in module.compare(Path("run"), source, 0.00005))
+            )
             metrics[0]["average_precision"] += 0.1
-            self.assertTrue(any(not r["passed"] for r in module.compare(Path("run"), source, 0.00005)))
+            self.assertTrue(
+                any(
+                    not r["passed"]
+                    for r in module.compare(Path("run"), source, 0.00005)
+                )
+            )
 
 
 if __name__ == "__main__":

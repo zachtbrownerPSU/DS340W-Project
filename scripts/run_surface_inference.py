@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import fisher_exact
 
-
 SEVERITY_COLUMNS = ["DM_M1", "DM_M7", "DM_M28", "DM_M42"]
 
 
@@ -80,10 +79,7 @@ def bootstrap_surface(data, repetitions, seed):
             "odds_ratio": (
                 synthetic_injuries
                 * (natural_exposures - natural_injuries)
-                / (
-                    natural_injuries
-                    * (synthetic_exposures - synthetic_injuries)
-                )
+                / (natural_injuries * (synthetic_exposures - synthetic_injuries))
             ),
         }
     )
@@ -177,7 +173,9 @@ def main():
     data["surface"] = data["FieldType"].map(canonical_surface)
     available = set(data["surface"].dropna().unique())
     if not {"Natural", "Synthetic"}.issubset(available):
-        raise ValueError(f"Natural and Synthetic surfaces were not both found: {available}")
+        raise ValueError(
+            f"Natural and Synthetic surfaces were not both found: {available}"
+        )
     data = data[data["surface"].isin(["Natural", "Synthetic"])].copy()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 

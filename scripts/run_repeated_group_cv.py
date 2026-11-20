@@ -9,7 +9,6 @@ from sklearn.model_selection import StratifiedGroupKFold
 
 from train_models import model_specs
 
-
 MODEL_NAMES = [
     "surface_logistic",
     "context_logistic",
@@ -111,7 +110,9 @@ def main():
             for fold, (train_index, test_index) in enumerate(fold_indices, start=1):
                 fitted = clone(pipeline)
                 fitted.fit(data.iloc[train_index][features], labels[train_index])
-                probabilities = fitted.predict_proba(data.iloc[test_index][features])[:, 1]
+                probabilities = fitted.predict_proba(data.iloc[test_index][features])[
+                    :, 1
+                ]
                 values = score(labels[test_index], probabilities)
                 metric_rows.append(
                     {
@@ -120,7 +121,9 @@ def main():
                         "model": name,
                         "training_rows": len(train_index),
                         "evaluation_rows": len(test_index),
-                        "evaluation_players": data.iloc[test_index]["PlayerKey"].nunique(),
+                        "evaluation_players": data.iloc[test_index][
+                            "PlayerKey"
+                        ].nunique(),
                         "positive_rows": int(labels[test_index].sum()),
                         **values,
                     }

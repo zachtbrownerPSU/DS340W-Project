@@ -35,7 +35,9 @@ def main():
     players = read_player_keys(args.raw_dir / "PlayList.csv")
     injured = read_player_keys(args.raw_dir / "InjuryRecord.csv")
     if not injured <= players:
-        raise ValueError("InjuryRecord.csv contains a PlayerKey absent from PlayList.csv")
+        raise ValueError(
+            "InjuryRecord.csv contains a PlayerKey absent from PlayList.csv"
+        )
 
     injured_train, injured_test, injured_validation = partition(injured, args.seed)
     healthy_train, healthy_test, healthy_validation = partition(
@@ -53,7 +55,11 @@ def main():
         raise RuntimeError("Split files do not cover every player")
     if any(
         split_sets[left] & split_sets[right]
-        for left, right in (("train", "test"), ("train", "validation"), ("test", "validation"))
+        for left, right in (
+            ("train", "test"),
+            ("train", "validation"),
+            ("test", "validation"),
+        )
     ):
         raise RuntimeError("A player appears in more than one split")
 

@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 LOWER_BODY_PATTERN = re.compile(
     r"\b(?:knee|ankle|hamstring|groin|calf|calves|foot|feet|hip|hips|quadricep|quadriceps|quad|toe|toes|achilles|heel|shin|thigh|tibia|fibula|lower leg|adductor|glute|pelvis)\b",
     re.IGNORECASE,
@@ -78,8 +77,12 @@ def prepare_rosters(rosters):
     name_map = rosters.dropna(subset=["gsis_id", "clean_name"])[
         ["season", "team", "clean_name", "gsis_id"]
     ].drop_duplicates()
-    counts = name_map.groupby(["season", "team", "clean_name"])["gsis_id"].transform("nunique")
-    name_map = name_map.loc[counts.eq(1)].drop_duplicates(["season", "team", "clean_name"])
+    counts = name_map.groupby(["season", "team", "clean_name"])["gsis_id"].transform(
+        "nunique"
+    )
+    name_map = name_map.loc[counts.eq(1)].drop_duplicates(
+        ["season", "team", "clean_name"]
+    )
     return exact, name_map
 
 
@@ -95,7 +98,9 @@ def map_players(snaps, exact, name_map):
         validate="many_to_one",
         suffixes=("", "_roster"),
     )
-    merged["mapping_method"] = merged["gsis_id"].notna().map({True: "pfr_id", False: "unmapped"})
+    merged["mapping_method"] = (
+        merged["gsis_id"].notna().map({True: "pfr_id", False: "unmapped"})
+    )
     missing = merged["gsis_id"].isna()
     fallback = merged.loc[missing, ["season", "team", "clean_name"]].merge(
         name_map,
@@ -139,7 +144,9 @@ def build_team_schedule(games, seasons):
     schedule["surface_group"] = classify_surface(schedule["surface"])
     schedule = schedule.sort_values(["season", "team", "gameday", "week"])
     schedule["next_team_week"] = schedule.groupby(["season", "team"])["week"].shift(-1)
-    schedule["next_game_date"] = schedule.groupby(["season", "team"])["gameday"].shift(-1)
+    schedule["next_game_date"] = schedule.groupby(["season", "team"])["gameday"].shift(
+        -1
+    )
     return schedule
 
 
@@ -153,7 +160,9 @@ def prepare_injuries(injuries):
         "practice_secondary_injury",
     ]
     combined = injuries[text_columns].fillna("").astype(str).agg(" | ".join, axis=1)
-    injuries["lower_body_report"] = combined.str.contains(LOWER_BODY_PATTERN, na=False).astype(int)
+    injuries["lower_body_report"] = combined.str.contains(
+        LOWER_BODY_PATTERN, na=False
+    ).astype(int)
     injuries["lower_body_out"] = (
         injuries["lower_body_report"].eq(1)
         & injuries["report_status"].fillna("").str.casefold().eq("out")
@@ -253,8 +262,7 @@ def main():
         & cohort["current_lower_body_report"].eq(0)
     ).astype(int)
     cohort["new_lower_body_out"] = (
-        cohort["next_lower_body_out"].eq(1)
-        & cohort["current_lower_body_report"].eq(0)
+        cohort["next_lower_body_out"].eq(1) & cohort["current_lower_body_report"].eq(0)
     ).astype(int)
 
     mapped_before_filter = int(cohort["gsis_id"].notna().sum())
@@ -355,7 +363,9 @@ def main():
         "seasons": seasons,
         "raw_snap_rows": int(total_before_filter),
         "mapped_snap_rows": mapped_before_filter,
-        "mapping_rate": mapped_before_filter / total_before_filter if total_before_filter else 0,
+        "mapping_rate": (
+            mapped_before_filter / total_before_filter if total_before_filter else 0
+        ),
         "cohort_rows": int(len(cohort)),
         "players": int(cohort["gsis_id"].nunique()),
         "games": int(cohort["game_id"].nunique()),

@@ -18,7 +18,7 @@ def main():
     lines = [
         "# Extended analysis summary",
         "",
-        "All results below use training and testing players only. Validation players were not evaluated.",
+        "These results use the original training and testing players. Validation players are excluded.",
         "",
     ]
 
@@ -109,14 +109,14 @@ def main():
         [
             "## Completed-play prediction",
             "",
-            "| Window | Best model | Average precision | Precision | Recall | Injury-game alert rate | False alerts per 1,000 negative plays |",
+            "| Window | Best model | Average precision | Precision | Recall | "
+            "Injury-game alert rate | False alerts per 1,000 negative plays |",
             "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
     for window in [5, 10, 20]:
         metrics = pd.read_csv(
-            args.outputs_dir
-            / f"play_sequence_models/within_{window}_plays/metrics.csv"
+            args.outputs_dir / f"play_sequence_models/within_{window}_plays/metrics.csv"
         )
         row = metrics.sort_values("average_precision", ascending=False).iloc[0]
         lines.append(
@@ -130,7 +130,13 @@ def main():
             "",
             "## Interpretation limits",
             "",
-            "The dataset has few injuries, repeated rows from the same players, and no random assignment of playing surface. Cross-validation, bootstrapping, and within-player comparisons measure uncertainty but do not remove all confounding. The completed-play models are exploratory and use fewer timed injury events because injury records without a PlayKey are excluded.",
+            "The dataset has few injuries and repeated observations from the "
+            "same players. Playing surface was not randomly assigned. "
+            "Cross-validation, bootstrapping, and within-player comparisons "
+            "help describe uncertainty, but they do not remove all "
+            "confounding. Play-window models are exploratory. They use fewer "
+            "injury events because records without a PlayKey cannot be placed "
+            "within a play sequence.",
             "",
         ]
     )

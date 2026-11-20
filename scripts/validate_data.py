@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 EXPECTED_COLUMNS = {
     "InjuryRecord.csv": [
         "PlayerKey",
@@ -146,13 +145,15 @@ def main():
     lines.extend(
         [
             "",
-            "The paper does not identify a direct data link. Its population description matches the NFL 1st and Future Analytics dataset, but the Figure 2 counts cannot be reproduced from InjuryRecord.csv without a different counting rule or additional data.",
+            "The paper does not link directly to its data. Its sample "
+            "description matches the NFL 1st and Future Analytics dataset, "
+            "but Figure 2 does not match the counts in InjuryRecord.csv. We "
+            "cannot tell whether the authors counted injuries differently or "
+            "used other data.",
             "",
         ]
     )
-    (args.output_dir / "data_audit.md").write_text(
-        "\n".join(lines), encoding="utf-8"
-    )
+    (args.output_dir / "data_audit.md").write_text("\n".join(lines), encoding="utf-8")
     print(json.dumps(report, indent=2))
 
 

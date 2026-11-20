@@ -18,7 +18,10 @@ def save_bar(frame, x, y, hue, title, ylabel, path):
             .set_index(x)[y]
             .reindex(categories, fill_value=0)
         )
-        offsets = [position + (index - (len(hue_values) - 1) / 2) * width for position in positions]
+        offsets = [
+            position + (index - (len(hue_values) - 1) / 2) * width
+            for position in positions
+        ]
         axis.bar(
             offsets,
             values,
@@ -58,8 +61,14 @@ def main():
         .rename("player_games")
     )
     injury_counts = injuries.groupby("Surface").size().rename("injuries")
-    rates = pd.concat([exposure, injury_counts], axis=1).fillna(0).reset_index(names="surface")
-    rates["injuries_per_1000_player_games"] = rates["injuries"] / rates["player_games"] * 1000
+    rates = (
+        pd.concat([exposure, injury_counts], axis=1)
+        .fillna(0)
+        .reset_index(names="surface")
+    )
+    rates["injuries_per_1000_player_games"] = (
+        rates["injuries"] / rates["player_games"] * 1000
+    )
     rates.to_csv(args.output_dir / "injury_rates_by_surface.csv", index=False)
 
     severity_columns = ["DM_M1", "DM_M7", "DM_M28", "DM_M42"]

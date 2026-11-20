@@ -13,7 +13,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-
 SUBGROUP_COLUMNS = [
     "FieldType",
     "PositionGroup",
@@ -165,9 +164,7 @@ def main():
                         **subgroup_metrics(frame, threshold),
                     }
                 )
-        false_positives = combined[combined["injury"].eq(0)].nlargest(
-            25, "probability"
-        )
+        false_positives = combined[combined["injury"].eq(0)].nlargest(25, "probability")
         false_negatives = combined[combined["injury"].eq(1)].nsmallest(
             25, "probability"
         )
@@ -185,7 +182,9 @@ def main():
     pd.concat(error_rows, ignore_index=True).to_csv(
         args.output_dir / "largest_errors.csv", index=False
     )
-    best_model = metrics.sort_values("average_precision", ascending=False).iloc[0]["model"]
+    best_model = metrics.sort_values("average_precision", ascending=False).iloc[0][
+        "model"
+    ]
     for column in SUBGROUP_COLUMNS:
         save_plot(subgroup_results, best_model, column, args.output_dir)
     print(

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source scripts/activate_penn_state_server.sh
 mkdir -p outputs/run_logs data/processed
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
 export PYTHONHASHSEED=340

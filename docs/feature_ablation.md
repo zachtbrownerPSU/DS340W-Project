@@ -21,7 +21,7 @@ Context includes position, stadium, weather, temperature, relative day, listed g
 
 Stadium and weather remain available when FieldType is omitted. These variables can proxy surface, so the comparison measures the incremental value of explicitly supplying FieldType, not the value of removing all information associated with surface.
 
-All preprocessing is fitted within a training fold. XGBoost's class weight is recalculated from that fold's training labels. Hyperparameters remain fixed across feature groups; there is no search for a winning configuration in this experiment. XGBoost fits use a server GPU, and prediction uses the CPU to avoid device mismatch warnings. Logistic regression and random forest use the server CPU.
+All preprocessing is fitted within a training fold. XGBoost's class weight is recalculated from that fold's training labels. Hyperparameters remain fixed across feature groups; there is no search for a winning configuration in this experiment. XGBoost fits use the selected CPU or NVIDIA device, and prediction uses the CPU. Logistic regression and random forest use the CPU.
 
 ## Timing problem discovered during the audit
 
@@ -51,26 +51,20 @@ The original final validation results were examined before this follow-up was de
 
 The target is recorded lower-limb injury during a player-game. The available labels do not establish non-contact mechanism. The sample is small, injuries are rare, the cohort is selected, and surface was not randomized. Predictive improvements do not establish causation or clinical utility. The audit verifies implementation against available columns; it cannot verify when every raw observation was actually measured.
 
-## Server commands
+## Running the study
 
-Run from `/data/ds340w-003-team1`. Choose new output directories for a rerun; the script refuses to overwrite an existing directory.
+Follow the installation and data instructions in the README, then run the main entry point:
 
-```bash
-source scripts/activate_penn_state_server.sh
-python scripts/run_feature_ablation.py --table data/processed/player_game_modeling.csv --output-dir outputs/feature_ablation_20261115_primary --repeats 5 --folds 5 --bootstrap 2000 --threads 8 --device cuda:0 --chronology-policy exclude_players
-python scripts/run_feature_ablation.py --table data/processed/player_game_modeling.csv --output-dir outputs/feature_ablation_20261115_sensitivity --repeats 5 --folds 5 --bootstrap 2000 --threads 8 --device cuda:1 --chronology-policy game_order
+```text
+python main.py
 ```
 
-The November 15 runs were launched in separate background processes with eight CPU threads each. Their logs are `outputs/feature_ablation_20261115_primary.log` and `outputs/feature_ablation_20261115_sensitivity.log`.
+This rebuilds the input table, runs both timing policies, verifies predictions, generates figures, and compares the results with the reference study. It defaults to CPU. Add `--device cuda:0` to use an NVIDIA GPU for XGBoost. Each run has a new output directory.
 
 ## Outputs
 
 Each run records its code and input hashes, settings, package versions, hostname, GPU inventory, feature lists, parameters, and timestamps in `manifest.json`. It also saves the timing audit, affected records, exact folds, fold and repeat metrics, complete predictions, paired differences, bootstrap intervals, a written summary, and black-and-white ROC and precision-recall figures.
 
-Exact copies of the executed modeling script and its shared model code are retained in each run's `source/` directory. `scripts/summarize_feature_ablation.py` verifies those hashes, checks all saved fold assignments, recomputes metrics from predictions, and produces a combined report:
+Exact copies of the executed modeling script and its shared model code are retained in each run's `source/` directory. The main entry point calls `scripts/summarize_feature_ablation.py` to verify those hashes, check saved fold assignments, recompute metrics from predictions, and produce the combined `SUMMARY.md` report.
 
-```bash
-python scripts/summarize_feature_ablation.py --primary outputs/feature_ablation_20261115_primary --sensitivity outputs/feature_ablation_20261115_sensitivity --output outputs/FEATURE_ABLATION_SUMMARY_20261115.md
-```
-
-The original data, split assignments, model scripts, saved models, and earlier validation outputs are not overwritten. All data audits, model fitting, bootstrap calculations, and figure generation execute on the Penn State server. The local machine is used to prepare and transfer code and retrieve documentation or results.
+The original data, split assignments, model scripts, saved models, and earlier validation outputs are not overwritten. Processing and training execute on the machine running `main.py`. The original study used a Linux NVIDIA workstation; other devices and environments can produce different numerical results, which remain visible in `paper_comparison.json`.

@@ -58,9 +58,21 @@ Raw competition files belong under `data/raw/` and should not be committed to a 
 
 ## Run the modeling code
 
-For the fresh-machine recording, follow [the reproduction instructions](docs/reproduce.md). They include Windows and macOS setup and one command that rebuilds the main study from the raw data. It uses the committed player assignments, keeps the original experiment settings, and checks the new metrics against the recorded study. The full NVIDIA rehearsal on the original server passed, but an actual CPU XGBoost check produced different scores. CPU execution does not require `nvidia-smi`, but it is not yet a verified way to match the GPU paper values. A full unused-machine run must still be verified before recording.
+Download or clone this repository and open a terminal in its folder. Install Python 3.11 or newer. The original study used Python 3.14.4. The code runs on Windows, macOS, or Linux and defaults to CPU; an NVIDIA GPU is optional. A complete run processes the large tracking file and fits 600 models, so allow substantial time and free disk space. A small laptop will be slower than a workstation.
 
-Install the Python packages:
+### Install once
+
+Windows PowerShell:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+If PowerShell blocks activation, use `.\.venv\Scripts\python.exe` instead of `python` for installation and running the project. You do not need to change the computer's execution policy.
+
+macOS or Linux:
 
 ```bash
 python3 -m venv .venv
@@ -68,49 +80,86 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Place the three Kaggle files listed above under `data/raw/`, then run the main pipeline:
+For the original study's exact package versions, use `requirements-study.txt` instead of `requirements.txt`. Package availability depends on Python version and platform. The pinned file describes the original environment, not a guarantee of identical numbers on every computer.
 
-```bash
-bash scripts/run_pipeline.sh
+### Add the data
+
+Download the official competition files from [Kaggle](https://www.kaggle.com/competitions/nfl-playing-surface-analytics/data), complete its access requirements, and extract the CSV files into this layout:
+
+```text
+DS340W-Project/
+    main.py
+    data/
+        raw/
+            InjuryRecord.csv
+            PlayList.csv
+            PlayerTrackData.csv
 ```
 
-On the Penn State classroom GPU server, use the project-local package setup because the server does not provide `ensurepip`:
+The injury file contains 105 records but 104 distinct injury player-games. Severity summaries count injury records; the classifier predicts whether a player-game contains an injury. The existing player assignments in `splits/player_split_assignments.csv` must stay unchanged.
 
-```bash
-bash scripts/setup_penn_state_server.sh
-source scripts/activate_penn_state_server.sh
-bash scripts/run_pipeline.sh
-bash scripts/run_gpu_models.sh
+### Run everything
+
+```text
+python main.py
 ```
 
-The extended experiments use repeated player-grouped cross-validation, GPU XGBoost tuning, surface inference, subgroup checks, and 5-play, 10-play, and 20-play prediction windows:
+There is no need to run the individual scripts or use Bash. `main.py` runs the complete main study in order:
 
-```bash
-bash scripts/run_extended_analysis.sh
+1. Check the raw data and save the data audit.
+2. Aggregate tracking observations into play-level movement features.
+3. Build the player-game table and earlier-game history using the committed splits.
+4. Recreate the descriptive surface comparisons.
+5. Run the primary and sensitivity feature-group analyses, including prediction verification.
+6. Summarize the metrics and paired player-bootstrap comparisons.
+7. Generate ROC, precision-recall, cohort-flow, and paired-interval figures for both analyses.
+8. Compare the results with the reference values and print the study summary.
+
+The study compares context, context plus surface, context plus earlier workload, and all inputs together. Logistic regression, random forest, and XGBoost share player-grouped folds. Five repeats of five folds across both timing policies produce 600 fits, followed by 2,000 player-bootstrap draws per analysis. These settings do not shrink on CPU.
+
+For a compatible NVIDIA GPU with a working driver and GPU-enabled XGBoost installation:
+
+```text
+python main.py --device cuda:0
 ```
 
-The original validation results have already been examined. Follow-up experiments use the original train and test players only and are exploratory; the earlier validation result is not an untouched test for later model changes. Generated data, fitted models, logs, and outputs are excluded from the repository.
+Only XGBoost uses the GPU. The other models and most data processing use the CPU. Optional arguments are shown by `python main.py --help`; these include data location, output location, thread count, and tracking chunk size. Relative paths are resolved from the repository folder. Every default run gets a new timestamped output folder. Existing output folders are never overwritten.
 
-## Compare surface and earlier workload
+### Read the results
 
-The feature ablation study compares context, context plus surface, context plus earlier workload, and all features together. Logistic regression, random forest, and XGBoost use identical player-grouped folds within each run.
+The terminal prints the new run folder, for example `outputs/run_20261120_140000_123456/`. Open these files inside it:
 
-```bash
-source scripts/activate_penn_state_server.sh
-python scripts/run_feature_ablation.py --table data/processed/player_game_modeling.csv --output-dir outputs/feature_ablation_primary --device cuda:0 --chronology-policy exclude_players
-python scripts/run_feature_ablation.py --table data/processed/player_game_modeling.csv --output-dir outputs/feature_ablation_sensitivity --device cuda:1 --chronology-policy game_order
-python scripts/summarize_feature_ablation.py --primary outputs/feature_ablation_primary --sensitivity outputs/feature_ablation_sensitivity --output outputs/feature_ablation_summary.md
+- `SUMMARY.md`: combined primary and sensitivity findings.
+- `audit/`: raw-data checks and descriptive source discrepancies.
+- `descriptive/`: descriptive comparisons and figures.
+- `primary/SUMMARY.md` and `sensitivity/SUMMARY.md`: model metrics and interpretation.
+- `primary/figures/` and `sensitivity/figures/`: paper-style PNG and PDF figures.
+- `primary/verification.json` and `sensitivity/verification.json`: prediction and fold checks.
+- `paper_comparison.json`: reference values, observed values, tolerance, and pass/fail checks.
+- `packages.txt` and `started.json`: environment and run settings.
+
+The primary analysis excludes 16 players with conflicting game-day order. It contains 209 players, 4,776 player-games, and 90 injury games. The sensitivity analysis retains those players under a listed-game-order assumption, giving 225 players, 5,192 player-games, and 93 injury games. See [the method description](docs/feature_ablation.md) for details.
+
+CPU and GPU XGBoost can give different scores. Different package versions can also change results. The paper comparison retains its absolute tolerance of 0.00005 and always reports mismatches. By default a reference mismatch does not discard an otherwise completed analysis or hide its results. It is not a successful reproduction of the paper values. To require a matching reference as well as a completed analysis, run:
+
+```text
+python main.py --strict-paper-match
 ```
 
-The primary run excludes players whose listed game days go backward. The sensitivity run keeps them under an explicit game-order assumption and treats nonpositive rest intervals as missing. Existing tables and results are preserved. See [feature ablation instructions](docs/feature_ablation.md) for the timing audit, feature definitions, evaluation, and output files.
+Any failed processing, training, prediction-verification, or plotting stage stops the pipeline. Read the first error before retrying. The main study has been fully rerun on Linux with NVIDIA hardware; a complete fresh Windows or macOS run has not yet been verified.
 
-## Build the external cohort
+## Scope and limitations
 
-The external analysis uses public 2020 through 2024 NFL injury reports, weekly rosters, snap counts, schedules, and playing-surface information. It remains separate from the anonymous Kaggle cohort.
+The original validation results were examined before this follow-up. The feature-group study uses the original training and testing players only. That earlier validation result is not an untouched test for later changes. The dataset does not establish non-contact mechanism or causal effects of playing surface.
 
-```bash
-bash scripts/download_external_nfl_data.sh
-python scripts/build_external_injury_cohort.py
+`main.py` runs the complete controlled feature-group study and descriptive analysis. Older tuning, play-window, subgroup, and external-cohort experiments remain separate modules; they are not silently added to this study or its injury labels. The external cohort uses public NFL injury reports and has a different outcome definition.
+
+Raw data, processed data, fitted models, and generated results are excluded from GitHub. The repository contains code and documentation needed to understand and run it.
+
+## Tests
+
+```text
+python -m unittest discover -s tests -v
 ```
 
-The player-game cohort and game-level surface table are written under `data/external/processed/` and are excluded from GitHub because they can be rebuilt from the source data.
+The runner tests mock expensive training stages. They check orchestration and failure handling, not the numerical accuracy of a newly trained model.

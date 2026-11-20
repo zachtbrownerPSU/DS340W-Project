@@ -392,8 +392,6 @@ def write_summary(audit, pooled, paired, bootstrap, args):
         "## Reproduce",
         "",
         "```bash",
-        "cd /data/ds340w-003-team1",
-        "source scripts/activate_penn_state_server.sh",
         f"python scripts/run_feature_ablation.py --table {args.table} --output-dir outputs/feature_ablation_new_run --repeats {args.repeats} --folds {args.folds} --bootstrap {args.bootstrap} --seed {args.seed} --threads {args.threads} --device {args.device} --chronology-policy {args.chronology_policy}",
         "```",
         "",

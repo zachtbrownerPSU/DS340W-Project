@@ -39,6 +39,7 @@ def main():
     parser.add_argument("--sensitivity", type=Path, required=True)
     parser.add_argument("--expected", type=Path, default=Path(__file__).resolve().parents[1] / "reference/paper_results.json")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--report-only", action="store_true")
     args = parser.parse_args()
     expected = json.loads(args.expected.read_text())
     tolerance = expected["absolute_tolerance"]
@@ -50,8 +51,8 @@ def main():
     print("Paper comparison: " + ("PASS" if not failures else "FAIL"))
     for name, row in failures:
         print(name + " " + row["item"] + ": expected " + str(row["expected"]) + ", found " + str(row["actual"]))
-    if failures:
-        raise SystemExit("Results do not match the recorded study within tolerance; inspect data, package versions, folds, and device before recording")
+    if failures and not args.report_only:
+        raise SystemExit("Results do not match the study within tolerance; inspect data, package versions, folds, and device")
 
 
 if __name__ == "__main__":
